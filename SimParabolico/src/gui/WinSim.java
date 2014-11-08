@@ -10,15 +10,15 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.Rectangle;
-import java.util.Dictionary;
-import java.util.HashMap;
+import java.awt.geom.Ellipse2D;
 import java.util.Hashtable;
-import javax.swing.BoundedRangeModel;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SpinnerNumberModel;
+import logica.MovParavolico;
 
 /**
  *
@@ -244,11 +244,11 @@ public class WinSim extends javax.swing.JFrame {
         pSim.setLayout(pSimLayout);
         pSimLayout.setHorizontalGroup(
             pSimLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 596, Short.MAX_VALUE)
         );
         pSimLayout.setVerticalGroup(
             pSimLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 396, Short.MAX_VALUE)
         );
 
         pTiempo.setBackground(new java.awt.Color(204, 255, 255));
@@ -571,25 +571,21 @@ public class WinSim extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void slTiempoStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_slTiempoStateChanged
-        System.out.println(slTiempo.getValue());
+
     }//GEN-LAST:event_slTiempoStateChanged
 
     private void pSimComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_pSimComponentResized
         //Actualizar por resize de pantalla
         pFondo.setSize(pSim.getWidth() - 4, pSim.getHeight() - 4);
-        tCX.setText(String.valueOf(pSim.getWidth()/2));
-        tCY.setText(String.valueOf(pSim.getHeight()/2));
-        //orderReproductor();
-        
+        pMov.setBounds(2, 2, pSim.getWidth() - 4, pSim.getHeight() - SIZE_PASTO + 5);
+        tCX.setText(String.valueOf(pSim.getWidth() / 2));
+        tCY.setText(String.valueOf(pSim.getHeight() / 2));
+
         System.out.println("ancho:, " + pSim.getWidth() + ", alto: " + pSim.getHeight());
         System.out.println("fancho:, " + this.getWidth() + ", falto: " + this.getHeight());
     }//GEN-LAST:event_pSimComponentResized
 
     private void spFinStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spFinStateChanged
-        /*if((double)spFin.getValue() < (double)spInicio.getValue()){
-            System.out.println("no puede " + spFin.getPreviousValue());
-            spFin.setValue(spFin.getPreviousValue());
-        }*/
         updateSlider();
     }//GEN-LAST:event_spFinStateChanged
 
@@ -598,11 +594,49 @@ public class WinSim extends javax.swing.JFrame {
     }//GEN-LAST:event_spInicioStateChanged
 
     private void bPlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bPlayActionPerformed
-        System.out.println("play");
+        if (startSim == false) {
+            startSim = true;
+            bPlay.setIcon(new ImageIcon(PAUSA.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
+            bPlay.setRolloverIcon(new ImageIcon(PAUSA_P.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
+            movP = new MovParavolico((double) spAngulo.getValue() * 2.0 * Math.PI / 360, (double) spVel.getValue(), 0);
+
+            new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    //Simular segundos
+                    double inicio = (double) spInicio.getValue();
+                    double fin = (double) spFin.getValue();
+
+                    //Simular tiempo en segundos
+                    for (double i = inicio; i <= fin && startSim; i = i + 0.1) {
+                        try {
+                            
+                            movP.setTiempo(i);
+                            pSim.updateUI();
+                            tPX.setText(String.format("%.2f", movP.getPosX()));
+                            tPY.setText(String.format("%.2f", movP.getPosY()));
+                            tTiempo.setText(String.format("%.2f", i));
+                            slTiempo.setValue((int)(i*100/fin) + 1);
+                            Thread.sleep(50);
+                            //System.out.println("Segundo: " + i + ", X: " + movP.getPosX() + ", Y:" + movP.getPosY());
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(WinSim.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    }
+
+                    bPlay.setIcon(new ImageIcon(PLAY.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
+                    bPlay.setRolloverIcon(new ImageIcon(PLAY_P.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
+                    startSim = false;
+                }
+            }).start();
+        } else {
+
+        }
     }//GEN-LAST:event_bPlayActionPerformed
 
     private void bStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bStopActionPerformed
-        // TODO add your handling code here:
+        startSim = false;
     }//GEN-LAST:event_bStopActionPerformed
 
     private void myinit() {
@@ -615,13 +649,20 @@ public class WinSim extends javax.swing.JFrame {
         pFondo.setOpaque(false);
         pSim.add(pFondo);
 
+        //Panel moviento
+        pMov = new panelMov();
+        pMov.setBounds(2, 2, pSim.getWidth() - 4, pSim.getHeight() - SIZE_PASTO + 5);
+        pMov.setBackground(new Color(0, 0, 0, 0));
+        pMov.setOpaque(true);
+        pSim.add(pMov, 0);
+
         //Configuracion de spinners
         spAngulo.setModel(new SpinnerNumberModel(0.0, 0.0, 90.0, 0.1));
         spVel.setModel(new SpinnerNumberModel(0.0, 0.0, null, 0.1));
         spVelViento.setModel(new SpinnerNumberModel(0.0, 0.0, null, 0.1));
         spInicio.setModel(new SpinnerNumberModel(0.0, 0.0, null, 0.1));
         spFin.setModel(new SpinnerNumberModel(0.0, 0.0, null, 0.1));
-        
+
         //Confugurar botones de reproduccion
         bPlay.setIcon(new ImageIcon(PLAY.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
         bPlay.setRolloverIcon(new ImageIcon(PLAY_P.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
@@ -631,55 +672,47 @@ public class WinSim extends javax.swing.JFrame {
         bPrev.setRolloverIcon(new ImageIcon(PREV_P.getImage().getScaledInstance(bPrev.getWidth(), bPrev.getHeight(), Image.SCALE_DEFAULT)));
         bNext.setIcon(new ImageIcon(NEXT.getImage().getScaledInstance(bNext.getWidth(), bNext.getHeight(), Image.SCALE_DEFAULT)));
         bNext.setRolloverIcon(new ImageIcon(NEXT_P.getImage().getScaledInstance(bNext.getWidth(), bNext.getHeight(), Image.SCALE_DEFAULT)));
-                
+
         //Valores de Simulacion
         tPX.setText("0.0");
         tPY.setText("0.0");
         tTiempo.setText("0.0");
-        tCX.setText(String.valueOf(pSim.getWidth()/2));
-        tCY.setText(String.valueOf(pSim.getHeight()/2));
-        
+        tCX.setText(String.valueOf(pSim.getWidth() / 2));
+        tCY.setText(String.valueOf(pSim.getHeight() / 2));
+
         updateSlider();
     }
-    
-    private void orderReproductor(){
-        int inicio = (pTiempo.getWidth() / 2) - 80;
-        bPlay.setLocation(inicio, bPlay.getY());
-        bStop.setLocation(inicio+40, bStop.getY());
-        bPrev.setLocation(inicio+80, bPrev.getY());
-        bNext.setLocation(inicio+120, bNext.getY());
-    }
-    
-    private void updateSlider(){
+
+    private void updateSlider() {
         double i = (double) spInicio.getValue();
         double f = (double) spFin.getValue();
         double can = f - i;
-        
-        if(f > i){
+
+        if (f > i) {
             slTiempo.setEnabled(true);
             Hashtable<Integer, JLabel> labelTable = new Hashtable();
             labelTable.put(0, new JLabel(String.format("%.2f", i)));
-            labelTable.put(20, new JLabel(String.format("%.2f", can * 20 / 100)) );
-            labelTable.put(40, new JLabel(String.format("%.2f", can * 40 / 100)) );
-            labelTable.put(60, new JLabel(String.format("%.2f", can * 60 / 100)) );
-            labelTable.put(80, new JLabel(String.format("%.2f", can * 80 / 100)) );
-            labelTable.put(100, new JLabel(String.format("%.2f", f)) );
-            slTiempo.setLabelTable( labelTable );
-        }else{
+            labelTable.put(20, new JLabel(String.format("%.2f", can * 20 / 100)));
+            labelTable.put(40, new JLabel(String.format("%.2f", can * 40 / 100)));
+            labelTable.put(60, new JLabel(String.format("%.2f", can * 60 / 100)));
+            labelTable.put(80, new JLabel(String.format("%.2f", can * 80 / 100)));
+            labelTable.put(100, new JLabel(String.format("%.2f", f)));
+            slTiempo.setLabelTable(labelTable);
+        } else {
             Hashtable<Integer, JLabel> labelTable = new Hashtable();
             labelTable.put(50, new JLabel(String.format("Tiempo Incorrecto", i)));
-            slTiempo.setLabelTable( labelTable );
+            slTiempo.setLabelTable(labelTable);
             slTiempo.setEnabled(false);
         }
     }
 
     class panelImg extends JPanel {
-        
+
         public panelImg() {
             super();
         }
-        
-        private Color color1 = new Color(34,148,219);
+
+        private Color color1 = new Color(34, 148, 219);
         private Color color2 = Color.white;
 
         public Color getColor1() {
@@ -704,19 +737,41 @@ public class WinSim extends javax.swing.JFrame {
             Graphics2D g2 = (Graphics2D) g;
             g2.setPaint(new GradientPaint(0.0f, 0.0f, color1.brighter(), 0.0f, getHeight(), color2.brighter()));
             g2.fillRect(0, 0, super.getWidth(), super.getHeight() - SIZE_PASTO + 10);
-            
+
             //Dibujar Pasto
             for (int i = 0; i < super.getWidth(); i++) {
                 g.drawImage(PASTO.getImage(), SIZE_PASTO * i, super.getHeight() - SIZE_PASTO, SIZE_PASTO, SIZE_PASTO, null);
             }
-            
+
             //Dibujar sol
             g.drawImage(SOL.getImage(), super.getWidth() - 150, 20, 70, 60, null);
-            
+
             //Dibujar nubes
             g.drawImage(NUBE.getImage(), 20, 10, 80, 40, null); //x, y, width, heigth
             g.drawImage(NUBE2.getImage(), super.getWidth() - 30, 30, 50, 20, null); //x, y, width, heigth
-            
+
+            super.paintComponent(g);
+        }
+    }
+
+    class panelMov extends JPanel {
+
+        public panelMov() {
+            super();
+        }
+
+        @Override
+        public void paint(Graphics g) {
+
+            g.setColor(Color.gray);
+
+            if (movP == null) {
+                g.drawImage(BOLA.getImage(), 50, this.getHeight() - SIZE_CANON, SIZE_CANON, SIZE_CANON, null);
+                //g.fillOval(50, this.getHeight() - CANON_DIA, CANON_DIA, CANON_DIA);
+            } else {
+                g.drawImage(BOLA.getImage(), (int) movP.getPosX() * 2 + 50, this.getHeight() - (int) movP.getPosY() * 2 - SIZE_CANON, SIZE_CANON, SIZE_CANON, null);
+                //g.fillOval((int) movP.getPosX() * 2 + 50, this.getHeight() - (int) movP.getPosY() * 2 - CANON_DIA, CANON_DIA, CANON_DIA);
+            }
             super.paintComponent(g);
         }
     }
@@ -736,8 +791,13 @@ public class WinSim extends javax.swing.JFrame {
     private final ImageIcon PREV_P = new ImageIcon(getClass().getResource("/img/prev_p.png"));
     private final ImageIcon NEXT = new ImageIcon(getClass().getResource("/img/next.png"));
     private final ImageIcon NEXT_P = new ImageIcon(getClass().getResource("/img/next_p.png"));
+    private final ImageIcon BOLA = new ImageIcon(getClass().getResource("/img/bola.png"));
     private final int SIZE_PASTO = 60;
+    private final int SIZE_CANON = 15;
     private panelImg pFondo;
+    private panelMov pMov;
+    private MovParavolico movP;
+    private boolean startSim = false;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bNext;
