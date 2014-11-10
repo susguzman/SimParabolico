@@ -263,6 +263,9 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JSpinner" name="spAngulo">
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="spAnguloStateChanged"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel2">
               <Properties>
@@ -281,6 +284,9 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JSpinner" name="spVel">
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="spVelStateChanged"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JSpinner" name="spVelViento">
             </Component>
