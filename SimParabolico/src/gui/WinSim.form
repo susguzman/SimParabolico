@@ -289,6 +289,9 @@
               </Events>
             </Component>
             <Component class="javax.swing.JSpinner" name="spVelViento">
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="spVelVientoStateChanged"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel4">
               <Properties>
@@ -433,7 +436,7 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="slTiempo" max="32767" attributes="0"/>
+                              <Component id="slTiempo" alignment="0" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="bPlay" min="-2" pref="40" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
@@ -442,7 +445,8 @@
                                   <Component id="bNext" min="-2" pref="40" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="bPrev" min="-2" pref="40" max="-2" attributes="0"/>
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="lTiempo" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -459,6 +463,7 @@
                               <Component id="bPlay" min="-2" pref="40" max="-2" attributes="0"/>
                               <Component id="bNext" alignment="0" min="-2" pref="40" max="-2" attributes="0"/>
                               <Component id="bPrev" min="-2" pref="40" max="-2" attributes="0"/>
+                              <Component id="lTiempo" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -522,6 +527,11 @@
                     <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
                       <Insets value="[2, 0, 2, 0]"/>
                     </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lTiempo">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Time"/>
                   </Properties>
                 </Component>
               </SubComponents>
