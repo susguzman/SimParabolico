@@ -283,6 +283,11 @@ public class WinSim extends javax.swing.JFrame {
                 slTiempoStateChanged(evt);
             }
         });
+        slTiempo.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                slTiempoPropertyChange(evt);
+            }
+        });
 
         bPlay.setToolTipText("Play");
         bPlay.setBorderPainted(false);
@@ -304,15 +309,25 @@ public class WinSim extends javax.swing.JFrame {
             }
         });
 
-        bNext.setToolTipText("Regresar");
+        bNext.setToolTipText("Adelantar");
         bNext.setBorderPainted(false);
         bNext.setContentAreaFilled(false);
         bNext.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        bNext.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bNextActionPerformed(evt);
+            }
+        });
 
-        bPrev.setToolTipText("Adelantar");
+        bPrev.setToolTipText("Regresar");
         bPrev.setBorderPainted(false);
         bPrev.setContentAreaFilled(false);
         bPrev.setMargin(new java.awt.Insets(2, 0, 2, 0));
+        bPrev.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bPrevActionPerformed(evt);
+            }
+        });
 
         lTiempo.setText("Time");
 
@@ -594,7 +609,11 @@ public class WinSim extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem2ActionPerformed
 
     private void slTiempoStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_slTiempoStateChanged
-
+        if(estado != S_EXE && estado != SE_TIEMPO && upSlTime){
+            double tiempo = (double)spInicio.getValue() + ((double) spFin.getValue() - (double)spInicio.getValue()) * slTiempo.getValue() / 100;        
+            tTiempo.setText(String.format("%.2f", tiempo));
+            posicionInicial(tiempo);
+        }
     }//GEN-LAST:event_slTiempoStateChanged
 
     private void pSimComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_pSimComponentResized
@@ -613,12 +632,14 @@ public class WinSim extends javax.swing.JFrame {
         double f = (double) spFin.getValue();
         checkEstado(i, f);
         updateSlider(i, f);
+        posicionInicial(i);
         generarTrayectoria(i, f);
     }//GEN-LAST:event_spFinStateChanged
 
     private void spInicioStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spInicioStateChanged
         double i = (double) spInicio.getValue();
         double f = (double) spFin.getValue();
+        tTiempo.setText(String.valueOf(i));
         checkEstado(i, f);
         updateSlider(i, f);
         posicionInicial(i);
@@ -628,19 +649,21 @@ public class WinSim extends javax.swing.JFrame {
     private void bPlayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bPlayActionPerformed
         if (estado == S_LISTA) {
             estado = S_EXE;
-            new Thread(rCrono).start();
+            if(Double.valueOf(tTiempo.getText()) == (double) spFin.getValue()){
+                tTiempo.setText(spInicio.getValue().toString());
+            }
             bPlay.setIcon(new ImageIcon(PAUSA.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
             bPlay.setRolloverIcon(new ImageIcon(PAUSA_P.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
-            movP = new MovParavolico((double) spAngulo.getValue() * 2.0 * Math.PI / 360, (double) spVel.getValue(), dirViento * (double) spVelViento.getValue());
-            pMov.setMovP(movP);
             enableParms(false);
-            moverCanon();
+            new Thread(rCrono).start();
+            moverBola();
 
         } else if (estado == S_PAUSA) {
             //Reanudar simulacion
+            estado = S_EXE;
             bPlay.setIcon(new ImageIcon(PAUSA.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
             bPlay.setRolloverIcon(new ImageIcon(PAUSA_P.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
-            moverCanon();
+            moverBola();
         } else {
             //Pausar simulacion
             estado = S_PAUSA;
@@ -688,9 +711,59 @@ public class WinSim extends javax.swing.JFrame {
         generarTrayectoria(i, f);
     }//GEN-LAST:event_spVelVientoStateChanged
 
+    private void bNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bNextActionPerformed
+        double tiempo = Double.valueOf(tTiempo.getText());
+        double inicio = (double)spInicio.getValue();
+        double fin = (Double) spFin.getValue();
+        boolean tope = false;
+        
+        if(tiempo + 0.1 <= fin){
+            tiempo = tiempo + 0.1;
+        }else if(tiempo == fin){
+            tope = true;
+        }else{
+            tiempo = fin;
+        }
+        tTiempo.setText(String.format("%.2f", tiempo));
+        
+        if(!tope){
+            posicionInicial(tiempo);
+            upSlTime = false;
+            slTiempo.setValue((int) ((tiempo - inicio)  * 100 / fin - inicio) + 1);
+            upSlTime = true;
+        }    
+    }//GEN-LAST:event_bNextActionPerformed
+
+    private void bPrevActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bPrevActionPerformed
+        double tiempo = Double.valueOf(tTiempo.getText());
+        double inicio = (Double) spInicio.getValue();
+        boolean tope = false;
+        
+        if(inicio <= tiempo - 0.1){
+            tiempo = tiempo - 0.1;
+        }else if(tiempo == inicio){
+            tope = true;
+        }else{
+            tiempo = inicio;
+        }
+        tTiempo.setText(String.format("%.2f", tiempo));
+        
+        if(!tope){
+            posicionInicial(tiempo);
+            upSlTime = false;
+            slTiempo.setValue((int) ((tiempo - inicio) * 100 / (double)spFin.getValue() - inicio) + 1);
+            upSlTime = true;
+        }
+    }//GEN-LAST:event_bPrevActionPerformed
+
+    private void slTiempoPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_slTiempoPropertyChange
+        System.out.println("can");
+    }//GEN-LAST:event_slTiempoPropertyChange
+
     private void myinit() {
         this.estado = 0;
         this.dirViento = -1;
+        this.upSlTime = true;
         pCentro.setBackground(new Color(0, 0, 0, 15));
 
         //Panel del fondo (paisaje)
@@ -804,67 +877,37 @@ public class WinSim extends javax.swing.JFrame {
 
     private void checkEstado(double i, double f) {
         if (f > i) {
-            estado = 0; //Ok
+            estado = S_LISTA; //Ok
         } else {
-            estado = 1; //Error de tiempo 
+            estado = SE_TIEMPO; //Error de tiempo 
         }
     }
 
-    private void posicionInicial(double i) {
+    private void posicionInicial(double time) {
         MovParavolico mp = new MovParavolico((double) spAngulo.getValue() * 2.0 * Math.PI / 360, (double) spVel.getValue(), dirViento * (double) spVelViento.getValue());
-        mp.setTiempo(i);
+        mp.setTiempo(time);
+        
+        tPX.setText(String.format("%.2f", mp.getPosX()));
+        tPY.setText(String.format("%.2f", mp.getPosY()));
+        tTiempo.setText(String.format("%.2f", time));
         pMov.setMovP(mp);
         pSim.updateUI();
     }
 
-    private void moverCanon() {
+    private void moverBola() {
         new Thread(new Runnable() {
 
             @Override
             public void run() {
-                //Simular segundos
-                double inicio, can;
-                double fin = (double) spFin.getValue();
-                if (estado == S_PAUSA) {
-                    inicio = Double.parseDouble(tTiempo.getText());
-                    can = fin - (double) spInicio.getValue();
-                    estado = S_EXE;
-                } else {
-                    inicio = (double) spInicio.getValue();
-                    can = fin - inicio;
-                }
-
-                //Simular tiempo en segundos
-                /*for (double i = inicio; i <= fin && estado == S_EXE; i = i + 0.1) {
-                 try {
-                 movP.setTiempo(i);
-                 pSim.updateUI();
-                 tPX.setText(String.format("%.2f", movP.getPosX()));
-                 tPY.setText(String.format("%.2f", movP.getPosY()));
-                 tTiempo.setText(String.format("%.2f", i));
-                 slTiempo.setValue((int) (i * 100 / fin) + 1);
-                 Thread.sleep(50);
-                 //System.out.println("Segundo: " + i + ", X: " + (int)movP.getPosX() + ", Y:" + (int)movP.getPosY());
-                 } catch (InterruptedException ex) {
-                 Logger.getLogger(WinSim.class.getName()).log(Level.SEVERE, null, ex);
-                 }
-                 }*/
-                /*int size = (int) ((fin - inicio) / 0.1);
-                for (int i = 0; i < size && estado == S_EXE; i++) {
-                    try {
-                        movP.setTiempo(inicio + i * 0.1);
-                        tPX.setText(String.format("%.2f", movP.getPosX()));
-                        tPY.setText(String.format("%.2f", movP.getPosY()));
-                        tTiempo.setText(String.format("%.2f", inicio + i * 0.1));
-                        slTiempo.setValue((int) ((inicio + i * 0.1) * 100 / can) + 1);
-                        pSim.updateUI();
-                        Thread.sleep(50);
-                        //System.out.println("Segundo: " + i + ", X: " + (int)movP.getPosX() + ", Y:" + (int)movP.getPosY());
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(WinSim.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }*/
+                movP = new MovParavolico((double) spAngulo.getValue() * 2.0 * Math.PI / 360, (double) spVel.getValue(), dirViento * (double) spVelViento.getValue());
+                pMov.setMovP(movP);
                 
+                //Tiempo               
+                double inicio = Double.parseDouble(tTiempo.getText());
+                double fin = (double) spFin.getValue();
+                double can = fin - (double) spInicio.getValue();
+                
+                //Simular tiempo en segundos                
                 double tActual = inicio;                
                 while(tActual <= fin && estado == S_EXE){
                     try {
@@ -872,7 +915,7 @@ public class WinSim extends javax.swing.JFrame {
                         tPX.setText(String.format("%.2f", movP.getPosX()));
                         tPY.setText(String.format("%.2f", movP.getPosY()));
                         tTiempo.setText(String.format("%.2f", tActual));
-                        slTiempo.setValue((int) (tActual * 100 / can) + 1);
+                        slTiempo.setValue((int) ((tActual - (double) spInicio.getValue()) * 100 / can) + 1);
                         pSim.updateUI();
                         Thread.sleep(50);
                         //System.out.println("Segundo: " + i + ", X: " + (int)movP.getPosX() + ", Y:" + (int)movP.getPosY());
@@ -892,6 +935,7 @@ public class WinSim extends javax.swing.JFrame {
                     estado = S_LISTA;
                     bPlay.setIcon(new ImageIcon(PLAY.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
                     bPlay.setRolloverIcon(new ImageIcon(PLAY_P.getImage().getScaledInstance(bPlay.getWidth(), bPlay.getHeight(), Image.SCALE_DEFAULT)));
+                    enableParms(true);
                 }
             }
         }).start();
@@ -966,12 +1010,15 @@ public class WinSim extends javax.swing.JFrame {
         public void paint(Graphics g) {
 
             g.setColor(Color.gray);
-
+            
             if (movP == null) {
-                g.drawImage(BOLA.getImage(), 50, this.getHeight() - SIZE_CANON, SIZE_CANON, SIZE_CANON, null);
+                g.drawImage(BOLA.getImage(), 50, this.getHeight() - SIZE_BOLA, SIZE_BOLA, SIZE_BOLA, null);
                 //g.fillOval(50, this.getHeight() - CANON_DIA, CANON_DIA, CANON_DIA);
             } else {
-                g.drawImage(BOLA.getImage(), (int) movP.getPosX() * 2 + POS_START, this.getHeight() - (int) movP.getPosY() * 2 - SIZE_CANON, SIZE_CANON, SIZE_CANON, null);
+                int y = this.getHeight() - (int) movP.getPosY() * 2 - SIZE_BOLA;
+                int x = (int) movP.getPosX() * 2 + POS_START;
+                System.out.println("X: " + x + " Y: " + y);
+                g.drawImage(BOLA.getImage(), x, y, SIZE_BOLA, SIZE_BOLA, null);
                 //g.fillOval((int) movP.getPosX() * 2 + 50, this.getHeight() - (int) movP.getPosY() * 2 - CANON_DIA, CANON_DIA, CANON_DIA);
             }
             super.paintComponent(g);
@@ -1060,17 +1107,18 @@ public class WinSim extends javax.swing.JFrame {
     private final ImageIcon NEXT_P = new ImageIcon(getClass().getResource("/img/next_p.png"));
     private final ImageIcon BOLA = new ImageIcon(getClass().getResource("/img/bola.png"));
     private final int SIZE_PASTO = 60;
-    private final int SIZE_CANON = 15;
+    private final int SIZE_BOLA = 15;
     private final int POS_START = 50;
     private final int S_LISTA = 0;
     private final int S_PAUSA = 1;
     private final int S_EXE = 2;
-    private final int SE_TIEMPO = 1;
+    private final int SE_TIEMPO = 3;
 
     //Mis variables
     private panelImg pFondo;
     private panelMov pMov;
     private panelLin pLin;
+    private boolean upSlTime;
 
     private MovParavolico movP;
     private int estado, dirViento;

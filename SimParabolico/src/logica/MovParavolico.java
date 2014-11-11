@@ -13,8 +13,7 @@ public class MovParavolico {
     private double angulo;      //radianes
     private double vel, velX, velY, vel_viento; 
     private double gravedad;
-    private boolean avanceX = true;
-    private double tiempo = 0, posx = 0, posy =0;
+    private double tiempo = 0, tChoque = 0;
     
     public MovParavolico(double angulo, double vel, double vel_viento){
         this(angulo, vel, vel_viento, -9.8);
@@ -26,6 +25,7 @@ public class MovParavolico {
         this.vel_viento = vel_viento;
         this.gravedad = gravedad;
         calVelocidades();
+        calTChocque();
     }
     
     private void calVelocidades(){
@@ -33,26 +33,27 @@ public class MovParavolico {
         velY = vel * Math.sin(angulo);
     }
     
+    private void calTChocque(){
+        tChoque = (-2 * velY) / gravedad;
+    }
+    
     public void setTiempo(double tiempo){
         this.tiempo = tiempo;
     }
     
     public double getPosX(){
-        if(avanceX){
-            posx = (velX + vel_viento) * tiempo;
-            return posx;
+        if(tiempo <= tChoque){
+            return (velX + vel_viento) * tiempo;
         }else{
-            return posx;
-        }        
+            return (velX + vel_viento) * tChoque;
+        }       
     }
     
     public double getPosY(){
-        posy = (velY * tiempo) + (gravedad * Math.pow(tiempo, 2)) / 2;
-        if(posy >= 0){
-            return posy;
+        if(tiempo <= tChoque){
+            return (velY * tiempo) + (gravedad * Math.pow(tiempo, 2)) / 2;
         }else{
-            avanceX = false;
-            return 0;            
+            return 0;
         }
     }
 }
