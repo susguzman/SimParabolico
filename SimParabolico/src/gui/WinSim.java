@@ -549,6 +549,11 @@ public class WinSim extends javax.swing.JFrame {
         jMenu3.setText("Archivo");
 
         jMenuItem4.setText("Exportar");
+        jMenuItem4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem4ActionPerformed(evt);
+            }
+        });
         jMenu3.add(jMenuItem4);
         jMenu3.add(jSeparator1);
 
@@ -620,6 +625,8 @@ public class WinSim extends javax.swing.JFrame {
         //Actualizar por resize de pantalla
         pFondo.setSize(pSim.getWidth() - 4, pSim.getHeight() - 4);
         pMov.setBounds(2, 2, pSim.getWidth() - 4, pSim.getHeight() - SIZE_PASTO + 5);
+        pLin.setBounds(2, 2, pSim.getWidth() - 4, pSim.getHeight() - SIZE_PASTO + 5);
+        //pCan.setBounds(2, 2, pSim.getWidth() - 4, pSim.getHeight() - SIZE_PASTO + 5);
         tCX.setText(String.valueOf(pSim.getWidth() / 2));
         tCY.setText(String.valueOf(pSim.getHeight() / 2));
 
@@ -757,14 +764,20 @@ public class WinSim extends javax.swing.JFrame {
     }//GEN-LAST:event_bPrevActionPerformed
 
     private void slTiempoPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_slTiempoPropertyChange
-        System.out.println("can");
+        
     }//GEN-LAST:event_slTiempoPropertyChange
+
+    private void jMenuItem4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem4ActionPerformed
+        ExportForm ef = new ExportForm();
+        ef.setVisible(true);
+    }//GEN-LAST:event_jMenuItem4ActionPerformed
 
     private void myinit() {
         this.estado = 0;
-        this.dirViento = -1;
+        this.dirViento = 1;
         this.upSlTime = true;
         pCentro.setBackground(new Color(0, 0, 0, 15));
+        jMenu1.setVisible(false);
 
         //Panel del fondo (paisaje)
         pFondo = new panelImg();
@@ -772,7 +785,14 @@ public class WinSim extends javax.swing.JFrame {
         pFondo.setBackground(new Color(0, 0, 0, 0));
         pFondo.setOpaque(false);
         pSim.add(pFondo);
-
+        
+        //Panel canon
+        /*pCan = new panelCanon();
+        pCan.setBounds(2, 2, pSim.getWidth() - 4, pSim.getHeight() - SIZE_PASTO + 5);
+        pCan.setBackground(new Color(0, 0, 0, 0));
+        pCan.setOpaque(true);
+        pSim.add(pCan, 0);*/
+        
         //Panel moviento
         pMov = new panelMov();
         pMov.setBounds(2, 2, pSim.getWidth() - 4, pSim.getHeight() - SIZE_PASTO + 5);
@@ -780,17 +800,17 @@ public class WinSim extends javax.swing.JFrame {
         pMov.setOpaque(true);
         pSim.add(pMov, 0);
 
-        //Panel moviento
+        //Panel trayectoria
         pLin = new panelLin();
         pLin.setBounds(2, 2, pSim.getWidth() - 4, pSim.getHeight() - SIZE_PASTO + 5);
         pLin.setBackground(new Color(0, 0, 0, 0));
         pLin.setOpaque(true);
-        pSim.add(pLin, 1);
+        pSim.add(pLin, 1);        
 
         //Configuracion de spinners
         spAngulo.setModel(new SpinnerNumberModel(0.0, 0.0, 90.0, 0.1));
         spVel.setModel(new SpinnerNumberModel(0.0, 0.0, null, 0.1));
-        spVelViento.setModel(new SpinnerNumberModel(0.0, 0.0, null, 0.1));
+        spVelViento.setModel(new SpinnerNumberModel(0.0, null, null, 0.1));
         spInicio.setModel(new SpinnerNumberModel(0.0, 0.0, null, 0.1));
         spFin.setModel(new SpinnerNumberModel(0.0, 0.0, null, 0.1));
 
@@ -1012,7 +1032,7 @@ public class WinSim extends javax.swing.JFrame {
             g.setColor(Color.gray);
             
             if (movP == null) {
-                g.drawImage(BOLA.getImage(), 50, this.getHeight() - SIZE_BOLA, SIZE_BOLA, SIZE_BOLA, null);
+                g.drawImage(BOLA.getImage(), POS_START, this.getHeight() - SIZE_BOLA, SIZE_BOLA, SIZE_BOLA, null);
                 //g.fillOval(50, this.getHeight() - CANON_DIA, CANON_DIA, CANON_DIA);
             } else {
                 int y = this.getHeight() - (int) movP.getPosY() * 2 - SIZE_BOLA;
@@ -1063,6 +1083,21 @@ public class WinSim extends javax.swing.JFrame {
                 g.drawPolyline(xCoords, yCoords, xCoords.length);
             }
 
+            super.paintComponent(g);
+        }
+    }
+    
+    class panelCanon extends JPanel {
+
+        public panelCanon() {
+            super();
+        }
+
+        @Override
+        public void paint(Graphics g) {
+
+            g.setColor(Color.black);  
+            g.fillRect(30, this.getHeight() - SIZE_BOLA, 25, 25);
             super.paintComponent(g);
         }
     }
@@ -1118,6 +1153,7 @@ public class WinSim extends javax.swing.JFrame {
     private panelImg pFondo;
     private panelMov pMov;
     private panelLin pLin;
+    private panelCanon pCan;
     private boolean upSlTime;
 
     private MovParavolico movP;
